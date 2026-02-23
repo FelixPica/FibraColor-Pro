@@ -1,0 +1,593 @@
+import React, { useState, useMemo, useEffect } from 'react';
+import { Search, Info, Hash, Droplets, Layers } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+
+// --- DATA & TYPES ---
+export interface ColorInfo {
+  name: string;
+  hex: string;
+  textColor: 'white' | 'black';
+  description?: string;
+}
+
+export const COLORS = {
+  AZUL: { name: 'Azul', hex: '#0000FF', textColor: 'white' } as ColorInfo,
+  NARANJA: { name: 'Naranja', hex: '#FF8C00', textColor: 'black' } as ColorInfo,
+  VERDE: { name: 'Verde', hex: '#008000', textColor: 'white' } as ColorInfo,
+  MARRON: { name: 'Marrón', hex: '#8B4513', textColor: 'white' } as ColorInfo,
+  GRIS: { name: 'Gris', hex: '#808080', textColor: 'white' } as ColorInfo,
+  BLANCO: { name: 'Blanco', hex: '#FFFFFF', textColor: 'black' } as ColorInfo,
+  ROJO: { name: 'Rojo', hex: '#FF0000', textColor: 'white' } as ColorInfo,
+  NEGRO: { name: 'Negro', hex: '#000000', textColor: 'white' } as ColorInfo,
+  AMARILLO: { name: 'Amarillo', hex: '#FFFF00', textColor: 'black' } as ColorInfo,
+  VIOLETA: { name: 'Violeta', hex: '#EE82EE', textColor: 'black' } as ColorInfo,
+  ROSA: { name: 'Rosa', hex: '#FFC0CB', textColor: 'black' } as ColorInfo,
+  TURQUESA: { name: 'Turquesa', hex: '#40E0D0', textColor: 'black' } as ColorInfo,
+  CYAN: { name: 'Cyan', hex: '#00FFFF', textColor: 'black' } as ColorInfo,
+};
+
+export const RAB_FIBER_COLORS: ColorInfo[] = [
+  COLORS.AZUL, COLORS.NARANJA, COLORS.VERDE, COLORS.MARRON,
+  COLORS.GRIS, COLORS.BLANCO, COLORS.ROJO, COLORS.NEGRO
+];
+
+export const KT_KP_FIBER_COLORS: ColorInfo[] = [
+  COLORS.VERDE, COLORS.ROJO, COLORS.AZUL, COLORS.AMARILLO,
+  COLORS.GRIS, COLORS.VIOLETA, COLORS.MARRON, COLORS.NARANJA,
+  COLORS.BLANCO, COLORS.NEGRO, COLORS.ROSA, COLORS.CYAN,
+  { ...COLORS.BLANCO, name: 'Blanco /', description: '/' },
+  { ...COLORS.AMARILLO, name: 'Amarillo /', description: '/' },
+  { ...COLORS.NARANJA, name: 'Naranja /', description: '/' },
+  { ...COLORS.ROSA, name: 'Rosa /', description: '/' },
+];
+
+export const KP_512_FIBER_COLORS: ColorInfo[] = [
+  COLORS.VERDE, COLORS.ROJO, COLORS.AZUL, COLORS.AMARILLO, COLORS.GRIS, COLORS.VIOLETA, COLORS.MARRON, COLORS.NARANJA,
+  COLORS.VERDE, COLORS.ROJO, COLORS.AZUL, COLORS.AMARILLO, COLORS.GRIS, 
+  { ...COLORS.VIOLETA, name: 'Violeta /', description: '/' },
+  { ...COLORS.BLANCO, name: 'Blanco /', description: '/' },
+  { ...COLORS.NARANJA, name: 'Naranja /', description: '/' },
+  COLORS.VERDE, COLORS.ROJO, COLORS.AZUL, COLORS.AMARILLO, COLORS.GRIS,
+  { ...COLORS.VIOLETA, name: 'Violeta //', description: '//' },
+  { ...COLORS.BLANCO, name: 'Blanco //', description: '//' },
+  { ...COLORS.NARANJA, name: 'Naranja //', description: '//' },
+  COLORS.VERDE, COLORS.ROJO, COLORS.AZUL, COLORS.AMARILLO, COLORS.GRIS,
+  { ...COLORS.VIOLETA, name: 'Violeta ///', description: '///' },
+  { ...COLORS.BLANCO, name: 'Blanco ///', description: '///' },
+  { ...COLORS.NARANJA, name: 'Naranja ///', description: '///' },
+];
+
+const getNumberedTubes = (baseColors: ColorInfo[], count: number): ColorInfo[] => {
+  const result: ColorInfo[] = [];
+  const repeatsPerColor = Math.ceil(count / baseColors.length);
+  const colorCounts: Record<string, number> = {};
+  for (let i = 0; i < count; i++) {
+    const colorIndex = Math.floor(i / repeatsPerColor);
+    const color = baseColors[colorIndex % baseColors.length];
+    colorCounts[color.name] = (colorCounts[color.name] || 0) + 1;
+    result.push({ 
+      ...color, 
+      name: count > baseColors.length ? `${color.name} ${colorCounts[color.name]}` : color.name 
+    });
+  }
+  return result;
+};
+
+const get16TubesPattern = (): ColorInfo[] => [
+  { ...COLORS.BLANCO, name: 'Blanco 1' }, { ...COLORS.ROJO, name: 'Rojo 1' }, { ...COLORS.AZUL, name: 'Azul 1' }, { ...COLORS.VERDE, name: 'Verde 1' },
+  { ...COLORS.BLANCO, name: 'Blanco 2' }, { ...COLORS.BLANCO, name: 'Blanco 3' }, { ...COLORS.BLANCO, name: 'Blanco 4' },
+  { ...COLORS.ROJO, name: 'Rojo 2' }, { ...COLORS.ROJO, name: 'Rojo 3' }, { ...COLORS.ROJO, name: 'Rojo 4' },
+  { ...COLORS.AZUL, name: 'Azul 2' }, { ...COLORS.AZUL, name: 'Azul 3' }, { ...COLORS.AZUL, name: 'Azul 4' },
+  { ...COLORS.VERDE, name: 'Verde 2' }, { ...COLORS.VERDE, name: 'Verde 3' }, { ...COLORS.VERDE, name: 'Verde 4' },
+];
+
+const TUBE_BASICS = [COLORS.BLANCO, COLORS.ROJO, COLORS.AZUL, COLORS.VERDE];
+const RISER_TUBE_BASE = KT_KP_FIBER_COLORS.map(c => c.name.includes('Amarillo') ? COLORS.BLANCO : c);
+
+export interface CableConfig { id: string; name: string; capacity: number; fibersTotal: number; fibersPerTube: number; tubeColors: ColorInfo[]; fiberColors: ColorInfo[]; continuousFibers?: boolean; }
+export interface CableType { id: string; name: string; configs: CableConfig[]; }
+export interface Operator { id: string; name: string; cableTypes: CableType[]; }
+
+export const OPERATORS: Operator[] = [
+  {
+    id: 'movistar', name: 'Movistar',
+    cableTypes: [
+      { id: 'rab', name: 'Tipo RAB', configs: [
+        { id: 'rab4', name: '4 FO', capacity: 4, fibersTotal: 4, fibersPerTube: 4, tubeColors: [COLORS.BLANCO], fiberColors: RAB_FIBER_COLORS },
+        { id: 'rab8', name: '8 FO', capacity: 8, fibersTotal: 8, fibersPerTube: 8, tubeColors: [COLORS.BLANCO], fiberColors: RAB_FIBER_COLORS },
+      ]},
+      { id: 'kt', name: 'Tipo KT', configs: [
+        { id: 'kt8', name: '8 FO', capacity: 8, fibersTotal: 8, fibersPerTube: 8, tubeColors: [COLORS.BLANCO], fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'kt16', name: '16 FO', capacity: 16, fibersTotal: 16, fibersPerTube: 4, tubeColors: TUBE_BASICS, fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'kt24', name: '24 FO', capacity: 24, fibersTotal: 24, fibersPerTube: 4, tubeColors: getNumberedTubes([COLORS.BLANCO, COLORS.ROJO, COLORS.AZUL], 6), fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'kt32_m1', name: '32 FO (4 tub x 8 fib)', capacity: 32, fibersTotal: 32, fibersPerTube: 8, tubeColors: TUBE_BASICS, fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'kt32_m2', name: '32 FO (8 tub x 4 fib)', capacity: 32, fibersTotal: 32, fibersPerTube: 4, tubeColors: getNumberedTubes(TUBE_BASICS, 8), fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'kt48', name: '48 FO', capacity: 48, fibersTotal: 48, fibersPerTube: 8, tubeColors: getNumberedTubes([COLORS.BLANCO, COLORS.ROJO, COLORS.AZUL], 6), fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'kt64', name: '64 FO', capacity: 64, fibersTotal: 64, fibersPerTube: 8, tubeColors: getNumberedTubes(TUBE_BASICS, 8), fiberColors: KT_KP_FIBER_COLORS },
+      ]},
+      { id: 'kp', name: 'Tipo KP', configs: [
+        { id: 'kp8', name: '8 FO', capacity: 8, fibersTotal: 8, fibersPerTube: 2, tubeColors: TUBE_BASICS, fiberColors: KT_KP_FIBER_COLORS, continuousFibers: true },
+        { id: 'kp16', name: '16 FO', capacity: 16, fibersTotal: 16, fibersPerTube: 4, tubeColors: TUBE_BASICS, fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'kp24', name: '24 FO', capacity: 24, fibersTotal: 24, fibersPerTube: 4, tubeColors: getNumberedTubes([COLORS.BLANCO, COLORS.ROJO, COLORS.AZUL], 6), fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'kp32_m1', name: '32 FO (4 tub x 8 fib)', capacity: 32, fibersTotal: 32, fibersPerTube: 8, tubeColors: TUBE_BASICS, fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'kp32_m2', name: '32 FO (8 tub x 4 fib)', capacity: 32, fibersTotal: 32, fibersPerTube: 4, tubeColors: getNumberedTubes(TUBE_BASICS, 8), fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'kp48', name: '48 FO', capacity: 48, fibersTotal: 48, fibersPerTube: 8, tubeColors: getNumberedTubes([COLORS.BLANCO, COLORS.ROJO, COLORS.AZUL], 6), fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'kp64', name: '64 FO', capacity: 64, fibersTotal: 64, fibersPerTube: 8, tubeColors: getNumberedTubes(TUBE_BASICS, 8), fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'kp128_m1', name: '128 FO (8 tub x 16 fib)', capacity: 128, fibersTotal: 128, fibersPerTube: 16, tubeColors: getNumberedTubes(TUBE_BASICS, 8), fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'kp128_m2', name: '128 FO (16 tub x 8 fib)', capacity: 128, fibersTotal: 128, fibersPerTube: 8, tubeColors: get16TubesPattern(), fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'kp256', name: '256 FO', capacity: 256, fibersTotal: 256, fibersPerTube: 16, tubeColors: get16TubesPattern(), fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'kp512', name: '512 FO', capacity: 512, fibersTotal: 512, fibersPerTube: 32, tubeColors: get16TubesPattern(), fiberColors: KP_512_FIBER_COLORS },
+      ]},
+      { id: 'riser', name: 'Tipo RISER', configs: [
+        { id: 'riser16', name: '16 FO', capacity: 16, fibersTotal: 16, fibersPerTube: 4, tubeColors: getNumberedTubes(RISER_TUBE_BASE, 4), fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'riser24', name: '24 FO', capacity: 24, fibersTotal: 24, fibersPerTube: 4, tubeColors: getNumberedTubes(RISER_TUBE_BASE, 6), fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'riser32', name: '32 FO', capacity: 32, fibersTotal: 32, fibersPerTube: 4, tubeColors: getNumberedTubes(RISER_TUBE_BASE, 8), fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'riser48', name: '48 FO', capacity: 48, fibersTotal: 48, fibersPerTube: 8, tubeColors: getNumberedTubes(RISER_TUBE_BASE, 6), fiberColors: KT_KP_FIBER_COLORS },
+        { id: 'riser64', name: '64 FO', capacity: 64, fibersTotal: 64, fibersPerTube: 8, tubeColors: getNumberedTubes(RISER_TUBE_BASE, 8), fiberColors: KT_KP_FIBER_COLORS },
+      ]}
+    ]
+  }
+];
+
+// --- APP COMPONENT ---
+export default function App() {
+  const initialOperator = OPERATORS[0];
+  const initialType = initialOperator.cableTypes[2]; // Tipo KP
+  const initialConfig = initialType.configs[5]; // 48 FO
+
+  const [selectedOperator, setSelectedOperator] = useState<Operator>(initialOperator);
+  const [selectedType, setSelectedType] = useState<CableType>(initialType);
+  const [selectedConfig, setSelectedConfig] = useState<CableConfig>(initialConfig);
+  const [fiberNumber, setFiberNumber] = useState<string>('');
+  const [showInfo, setShowInfo] = useState(false);
+
+  const APP_VERSION = '1.0.2';
+
+  const forceUpdate = () => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        for (const registration of registrations) {
+          registration.update();
+        }
+        window.location.reload();
+      });
+    } else {
+      window.location.reload();
+    }
+  };
+
+  const isFirstRender = React.useRef(true);
+
+  // Reset type and config when operator changes
+  useEffect(() => {
+    if (isFirstRender.current) return;
+    const firstType = selectedOperator.cableTypes[0];
+    setSelectedType(firstType);
+    setSelectedConfig(firstType.configs[0]);
+  }, [selectedOperator]);
+
+  // Reset config when type changes
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setSelectedConfig(selectedType.configs[0]);
+  }, [selectedType]);
+
+  const capacities = useMemo(() => {
+    const caps = Array.from(new Set(selectedType.configs.map(c => c.capacity))).sort((a, b) => (a as number) - (b as number));
+    return caps;
+  }, [selectedType]);
+
+  const selectedCapacity = selectedConfig.capacity;
+  const modelsForCapacity = useMemo(() => {
+    return selectedType.configs.filter(c => c.capacity === selectedCapacity);
+  }, [selectedType, selectedCapacity]);
+
+  const result = useMemo(() => {
+    const num = parseInt(fiberNumber);
+    if (isNaN(num) || num <= 0) return null;
+
+    if (num > selectedConfig.fibersTotal) {
+      return { error: `Capacidad máxima: ${selectedConfig.fibersTotal} fibras` };
+    }
+
+    const fibersPerTube = selectedConfig.fibersPerTube;
+    const tubeIndex = Math.floor((num - 1) / fibersPerTube);
+    
+    let fiberIndex: number;
+    if (selectedConfig.continuousFibers) {
+      fiberIndex = num - 1;
+    } else {
+      fiberIndex = (num - 1) % fibersPerTube;
+    }
+
+    const fiberColor = selectedConfig.fiberColors[fiberIndex] || KT_KP_FIBER_COLORS[fiberIndex % KT_KP_FIBER_COLORS.length];
+    const tubeColor = selectedConfig.tubeColors[tubeIndex % selectedConfig.tubeColors.length];
+
+    return {
+      tubeNumber: tubeIndex + 1,
+      fiberColor,
+      tubeColor,
+      fiberPosition: (num - 1) % fibersPerTube + 1
+    };
+  }, [fiberNumber, selectedConfig]);
+
+  const handleFiberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/\D/g, '');
+    setFiberNumber(val);
+  };
+
+  return (
+    <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans selection:bg-indigo-100 flex">
+      <aside className="hidden sm:flex flex-col w-64 bg-zinc-100 border-r border-zinc-200 sticky top-0 h-screen overflow-y-auto no-scrollbar shrink-0">
+        <div className="p-3 border-b border-zinc-200 bg-white sticky top-0 z-10 backdrop-blur-sm">
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 text-center">Referencia de Colores</h3>
+        </div>
+        
+        <div className="flex-1 grid grid-cols-2 divide-x divide-zinc-200 bg-zinc-100">
+          {/* Fiber Colors Column */}
+          <div className="bg-zinc-100">
+            <div className="p-2 border-b border-zinc-200 bg-zinc-200/50 sticky top-[37px] z-10">
+              <h4 className="text-[8px] font-black uppercase text-zinc-500 text-center">Fibras</h4>
+            </div>
+            <div className="p-1.5 space-y-0.5">
+              {(selectedConfig.continuousFibers ? selectedConfig.fiberColors.slice(0, selectedConfig.fibersTotal) : selectedConfig.fiberColors.slice(0, selectedConfig.fibersPerTube)).map((color, idx) => (
+                <div 
+                  key={`f-${idx}`}
+                  className="h-7 rounded flex items-center px-2 transition-all hover:brightness-95 shadow-sm border border-black/5 relative"
+                  style={{ backgroundColor: color.hex, color: color.textColor === 'white' ? 'white' : 'black' }}
+                >
+                  <span className="text-[8px] font-black opacity-40 w-4 shrink-0">{idx + 1}</span>
+                  <span className="text-[7px] font-bold uppercase truncate flex-1 text-center">{color.name.split(' /')[0]}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Tube Colors Column */}
+          <div className="bg-zinc-100">
+            <div className="p-2 border-b border-zinc-200 bg-zinc-200/50 sticky top-[37px] z-10">
+              <h4 className="text-[8px] font-black uppercase text-zinc-500 text-center">Tubos</h4>
+            </div>
+            <div className="p-1.5 space-y-0.5">
+              {selectedConfig.tubeColors.map((color, idx) => (
+                <div 
+                  key={`t-${idx}`}
+                  className="h-7 rounded flex items-center px-2 transition-all hover:brightness-95 shadow-sm border border-black/5 relative"
+                  style={{ backgroundColor: color.hex, color: color.textColor === 'white' ? 'white' : 'black' }}
+                >
+                  <span className="text-[8px] font-black opacity-40 w-4 shrink-0">{idx + 1}</span>
+                  <span className="text-[7px] font-bold uppercase truncate flex-1 text-center">{color.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-zinc-200 px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+              <Droplets size={18} />
+            </div>
+            <h1 className="font-bold text-lg tracking-tight">FibraColor <span className="text-indigo-600">Pro</span></h1>
+          </div>
+          <button 
+            onClick={() => setShowInfo(!showInfo)}
+            className="p-2 hover:bg-zinc-100 rounded-full transition-colors"
+          >
+            <Info size={20} className="text-zinc-500" />
+          </button>
+        </header>
+
+        <main className="max-w-md mx-auto w-full p-4 space-y-6 pb-24">
+          {/* Operator Selector */}
+          {OPERATORS.length > 1 && (
+            <section className="space-y-3">
+              <label className="text-xs font-semibold uppercase tracking-wider text-zinc-400 ml-1">Operadora</label>
+              <select 
+                value={selectedOperator.id}
+                onChange={(e) => setSelectedOperator(OPERATORS.find(o => o.id === e.target.value) || OPERATORS[0])}
+                className="w-full bg-white border-2 border-zinc-100 rounded-2xl py-3 px-4 font-bold focus:outline-none focus:border-indigo-500 transition-all shadow-sm"
+              >
+                {OPERATORS.map(op => <option key={op.id} value={op.id}>{op.name}</option>)}
+              </select>
+            </section>
+          )}
+
+          {/* Cable Type Selector */}
+          <section className="space-y-3">
+            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-400 ml-1 flex items-center gap-1">
+              <Layers size={12} /> Tipo de Cable
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {selectedOperator.cableTypes.map((type) => (
+                <button
+                  key={type.id}
+                  onClick={() => setSelectedType(type)}
+                  className={`px-4 py-3 rounded-2xl text-sm font-bold transition-all border-2 ${
+                    selectedType.id === type.id
+                      ? 'bg-zinc-900 border-zinc-900 text-white shadow-md'
+                      : 'bg-white border-zinc-200 text-zinc-500 hover:border-zinc-400 shadow-sm'
+                  }`}
+                >
+                  {type.name}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {/* Capacity and Model Selectors */}
+          <section className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 ml-1">Capacidad (FO)</label>
+              <select 
+                value={selectedCapacity}
+                onChange={(e) => {
+                  const cap = parseInt(e.target.value);
+                  const firstConfig = selectedType.configs.find(c => c.capacity === cap);
+                  if (firstConfig) setSelectedConfig(firstConfig);
+                }}
+                className="w-full bg-white border-2 border-zinc-100 rounded-xl py-2 px-3 text-sm font-bold focus:outline-none focus:border-indigo-500 transition-all shadow-sm"
+              >
+                {capacities.map(cap => <option key={cap} value={cap}>{cap} FO</option>)}
+              </select>
+            </div>
+
+            {modelsForCapacity.length > 1 && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 ml-1">Modelo / Tubos</label>
+                <select 
+                  value={selectedConfig.id}
+                  onChange={(e) => {
+                    const config = selectedType.configs.find(c => c.id === e.target.value);
+                    if (config) setSelectedConfig(config);
+                  }}
+                  className="w-full bg-white border-2 border-zinc-100 rounded-xl py-2 px-3 text-sm font-bold focus:outline-none focus:border-indigo-500 transition-all shadow-sm"
+                >
+                  {modelsForCapacity.map(m => <option key={m.id} value={m.id}>{m.name.split(' (')[1]?.replace(')', '') || m.name}</option>)}
+                </select>
+              </div>
+            )}
+          </section>
+
+          {/* Input Section */}
+          <section className="space-y-3">
+            <label className="text-xs font-semibold uppercase tracking-wider text-zinc-400 ml-1">Número de Fibra</label>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-zinc-400 group-focus-within:text-indigo-500 transition-colors">
+                <Hash size={20} />
+              </div>
+              <input
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={fiberNumber}
+                onChange={handleFiberChange}
+                placeholder="Ej: 48"
+                className="w-full bg-white border-2 border-zinc-100 rounded-2xl py-4 pl-12 pr-4 text-xl font-bold focus:outline-none focus:border-indigo-500 transition-all shadow-sm placeholder:text-zinc-300"
+              />
+            </div>
+          </section>
+
+          {/* Results Section */}
+          <AnimatePresence mode="wait">
+            {result ? (
+              'error' in result ? (
+                <motion.div
+                  key="error"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-red-50 border-2 border-red-100 p-6 rounded-3xl text-center space-y-2"
+                >
+                  <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto">
+                    <Info size={24} />
+                  </div>
+                  <p className="font-bold text-red-800">{result.error}</p>
+                  <p className="text-xs text-red-600">Por favor, introduce un número válido para este cable.</p>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="result"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="space-y-4"
+                >
+                  <div className="bg-white p-5 rounded-3xl shadow-xl shadow-zinc-200/50 border border-zinc-100 space-y-4">
+                    <div className="flex items-center justify-between border-b border-zinc-50 pb-3">
+                      <span className="text-zinc-500 font-bold">Fibra {fiberNumber}</span>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[9px] text-zinc-400 font-medium">{selectedType.name} - {selectedConfig.name}</span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3">
+                      {/* Tube Info */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between px-1">
+                          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Tubo</span>
+                          <span className="text-[10px] font-black text-zinc-900">Nº {result.tubeNumber}</span>
+                        </div>
+                        <div 
+                          className="h-10 rounded-xl flex items-center justify-center shadow-sm border border-black/5 relative overflow-hidden"
+                          style={{ backgroundColor: result.tubeColor.hex }}
+                        >
+                          <span className={`font-black text-sm z-10 ${result.tubeColor.textColor === 'white' ? 'text-white' : 'text-zinc-900'}`}>
+                            {result.tubeColor.name}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Fiber Info */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between px-1">
+                          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Fibra</span>
+                          <span className="text-[10px] font-black text-zinc-900">Posición {result.fiberPosition}</span>
+                        </div>
+                        <div 
+                          className="h-10 rounded-xl flex items-center justify-center shadow-sm border border-black/5 relative overflow-hidden"
+                          style={{ backgroundColor: result.fiberColor.hex }}
+                        >
+                          {result.fiberColor.description && (
+                            <div className="absolute inset-0 flex justify-around items-center pointer-events-none opacity-40">
+                              {[...Array(result.fiberColor.description.length)].map((_, i) => (
+                                <div key={i} className="w-1.5 h-full bg-black/40" />
+                              ))}
+                            </div>
+                          )}
+                          
+                          <span className={`font-black text-sm z-10 ${result.fiberColor.textColor === 'white' ? 'text-white' : 'text-zinc-900'}`}>
+                            {result.fiberColor.name}
+                          </span>
+                          {result.fiberColor.description && (
+                            <span className={`ml-2 text-[10px] font-black uppercase opacity-80 z-10 ${result.fiberColor.textColor === 'white' ? 'text-white' : 'text-zinc-900'}`}>
+                              {result.fiberColor.description}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )
+            ) : (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex flex-col items-center justify-center py-12 text-center space-y-4"
+              >
+                <div className="w-20 h-20 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-300">
+                  <Search size={40} />
+                </div>
+                <div className="space-y-1">
+                  <p className="font-bold text-zinc-400">Introduce un número</p>
+                  <p className="text-sm text-zinc-400 px-8">Selecciona el tipo de cable y el número de la fibra.</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Mobile Quick Reference (Bottom) */}
+          <section className="sm:hidden space-y-4 bg-zinc-100 -mx-4 p-4 rounded-t-[2rem] border-t border-zinc-200">
+            <div className="grid grid-cols-2 gap-4">
+              {/* Fiber Reference */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-wider text-zinc-500 block text-center">Fibras</label>
+                <div className="flex flex-col gap-0.5">
+                  {(selectedConfig.continuousFibers ? selectedConfig.fiberColors.slice(0, selectedConfig.fibersTotal) : selectedConfig.fiberColors.slice(0, selectedConfig.fibersPerTube)).map((color, idx) => (
+                    <div 
+                      key={idx}
+                      className="h-6 rounded flex items-center px-1.5 border border-black/5 shadow-sm"
+                      style={{ backgroundColor: color.hex, color: color.textColor === 'white' ? 'white' : 'black' }}
+                    >
+                      <span className="text-[6px] font-black opacity-40 w-3 shrink-0">{idx + 1}</span>
+                      <span className="text-[6px] font-bold uppercase truncate flex-1 text-center">
+                        {color.name.split(' /')[0]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tube Reference */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-wider text-zinc-500 block text-center">Tubos</label>
+                <div className="flex flex-col gap-0.5">
+                  {selectedConfig.tubeColors.map((color, idx) => (
+                    <div 
+                      key={idx}
+                      className="h-6 rounded flex items-center px-1.5 border border-black/5 shadow-sm"
+                      style={{ backgroundColor: color.hex, color: color.textColor === 'white' ? 'white' : 'black' }}
+                    >
+                      <span className="text-[6px] font-black opacity-40 w-3 shrink-0">{idx + 1}</span>
+                      <span className="text-[6px] font-bold uppercase truncate flex-1 text-center">
+                        {color.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+
+      {/* Info Modal */}
+      <AnimatePresence>
+        {showInfo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-zinc-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+            onClick={() => setShowInfo(false)}
+          >
+            <motion.div
+              initial={{ y: 100 }}
+              animate={{ y: 0 }}
+              exit={{ y: 100 }}
+              className="bg-white w-full max-w-md rounded-t-[2rem] sm:rounded-[2rem] p-8 space-y-6 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-12 h-1.5 bg-zinc-200 rounded-full mx-auto mb-2 sm:hidden" />
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold">Información Técnica</h2>
+                <div className="space-y-4 text-zinc-600 text-sm leading-relaxed max-h-[50vh] overflow-y-auto pr-2 no-scrollbar">
+                  <p>
+                    Esta herramienta utiliza los códigos de colores oficiales de <strong>Movistar España</strong> para sus diferentes tipos de cableado.
+                  </p>
+                  
+                  <div className="space-y-3">
+                    <div className="bg-zinc-50 p-4 rounded-2xl space-y-1">
+                      <p className="font-bold text-zinc-900 text-xs uppercase">Tipo RAB</p>
+                      <p>Cables de 4 y 8 fibras. 1 tubo blanco. Colores: Azul, Naranja, Verde, Marrón, Gris, Blanco, Rojo, Negro.</p>
+                    </div>
+                    
+                    <div className="bg-zinc-50 p-4 rounded-2xl space-y-1">
+                      <p className="font-bold text-zinc-900 text-xs uppercase">Tipo KT / KP</p>
+                      <p>Estándar de 16 colores. Incluye fibras con marcas para identificar posiciones superiores a la 12.</p>
+                    </div>
+
+                    <div className="bg-zinc-50 p-4 rounded-2xl space-y-1 border-l-4 border-indigo-500">
+                      <p className="font-bold text-zinc-900 text-xs uppercase">Nota Especial: 8 KP</p>
+                      <p>En el cable de 8 fibras tipo KP, los colores son seguidos. El tubo rojo contiene las fibras Azul y Amarillo.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-zinc-50 rounded-2xl p-4 space-y-2">
+                  <div className="flex justify-between items-center text-[10px]">
+                    <span className="text-zinc-400 font-bold uppercase">Versión</span>
+                    <span className="font-mono font-bold text-zinc-600">{APP_VERSION}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <button 
+                  onClick={forceUpdate}
+                  className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Droplets size={18} />
+                  Actualizar Aplicación
+                </button>
+                <button 
+                  onClick={() => setShowInfo(false)}
+                  className="w-full py-4 bg-zinc-100 text-zinc-900 rounded-2xl font-bold hover:bg-zinc-200 transition-colors"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

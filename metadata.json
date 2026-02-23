@@ -1,0 +1,5 @@
+{
+  "name": "FibraColor Pro",
+  "description": "Buscador de códigos de colores para fibras ópticas de operadoras españolas (Movistar, Orange, Vodafone, Digi, Avatel).",
+  "requestFramePermissions": []
+}

@@ -1,0 +1,59 @@
+{
+  "COLORS": {
+    "AZUL": { "name": "Azul", "hex": "#0000FF", "textColor": "white" },
+    "NARANJA": { "name": "Naranja", "hex": "#FF8C00", "textColor": "black" },
+    "VERDE": { "name": "Verde", "hex": "#008000", "textColor": "white" },
+    "MARRON": { "name": "Marrón", "hex": "#8B4513", "textColor": "white" },
+    "GRIS": { "name": "Gris", "hex": "#808080", "textColor": "white" },
+    "BLANCO": { "name": "Blanco", "hex": "#FFFFFF", "textColor": "black" },
+    "ROJO": { "name": "Rojo", "hex": "#FF0000", "textColor": "white" },
+    "NEGRO": { "name": "Negro", "hex": "#000000", "textColor": "white" },
+    "AMARILLO": { "name": "Amarillo", "hex": "#FFFF00", "textColor": "black" },
+    "VIOLETA": { "name": "Violeta", "hex": "#EE82EE", "textColor": "black" },
+    "ROSA": { "name": "Rosa", "hex": "#FFC0CB", "textColor": "black" },
+    "TURQUESA": { "name": "Turquesa", "hex": "#40E0D0", "textColor": "black" },
+    "CYAN": { "name": "Cyan", "hex": "#00FFFF", "textColor": "black" }
+  },
+  "OPERATORS": [
+    {
+      "id": "movistar",
+      "name": "Movistar",
+      "cableTypes": [
+        {
+          "id": "rab",
+          "name": "Tipo RAB",
+          "configs": [
+            { "id": "rab4", "name": "4 FO", "capacity": 4, "fibersTotal": 4, "fibersPerTube": 4, "tubeColors": [{ "name": "Blanco", "hex": "#FFFFFF", "textColor": "black" }], "fiberColors": [
+              { "name": "Azul", "hex": "#0000FF", "textColor": "white" }, { "name": "Naranja", "hex": "#FF8C00", "textColor": "black" }, { "name": "Verde", "hex": "#008000", "textColor": "white" }, { "name": "Marrón", "hex": "#8B4513", "textColor": "white" },
+              { "name": "Gris", "hex": "#808080", "textColor": "white" }, { "name": "Blanco", "hex": "#FFFFFF", "textColor": "black" }, { "name": "Rojo", "hex": "#FF0000", "textColor": "white" }, { "name": "Negro", "hex": "#000000", "textColor": "white" }
+            ]},
+            { "id": "rab8", "name": "8 FO", "capacity": 8, "fibersTotal": 8, "fibersPerTube": 8, "tubeColors": [{ "name": "Blanco", "hex": "#FFFFFF", "textColor": "black" }], "fiberColors": [
+              { "name": "Azul", "hex": "#0000FF", "textColor": "white" }, { "name": "Naranja", "hex": "#FF8C00", "textColor": "black" }, { "name": "Verde", "hex": "#008000", "textColor": "white" }, { "name": "Marrón", "hex": "#8B4513", "textColor": "white" },
+              { "name": "Gris", "hex": "#808080", "textColor": "white" }, { "name": "Blanco", "hex": "#FFFFFF", "textColor": "black" }, { "name": "Rojo", "hex": "#FF0000", "textColor": "white" }, { "name": "Negro", "hex": "#000000", "textColor": "white" }
+            ]}
+          ]
+        },
+        {
+          "id": "kt",
+          "name": "Tipo KT",
+          "configs": [
+            { "id": "kt8", "name": "8 FO", "capacity": 8, "fibersTotal": 8, "fibersPerTube": 8, "tubeColors": [{ "name": "Blanco", "hex": "#FFFFFF", "textColor": "black" }], "fiberColors": [
+              { "name": "Verde", "hex": "#008000", "textColor": "white" }, { "name": "Rojo", "hex": "#FF0000", "textColor": "white" }, { "name": "Azul", "hex": "#0000FF", "textColor": "white" }, { "name": "Amarillo", "hex": "#FFFF00", "textColor": "black" },
+              { "name": "Gris", "hex": "#808080", "textColor": "white" }, { "name": "Violeta", "hex": "#EE82EE", "textColor": "black" }, { "name": "Marrón", "hex": "#8B4513", "textColor": "white" }, { "name": "Naranja", "hex": "#FF8C00", "textColor": "black" },
+              { "name": "Blanco", "hex": "#FFFFFF", "textColor": "black" }, { "name": "Negro", "hex": "#000000", "textColor": "white" }, { "name": "Rosa", "hex": "#FFC0CB", "textColor": "black" }, { "name": "Cyan", "hex": "#00FFFF", "textColor": "black" },
+              { "name": "Blanco /", "hex": "#FFFFFF", "textColor": "black", "description": "/" }, { "name": "Amarillo /", "hex": "#FFFF00", "textColor": "black", "description": "/" }, { "name": "Naranja /", "hex": "#FF8C00", "textColor": "black", "description": "/" }, { "name": "Rosa /", "hex": "#FFC0CB", "textColor": "black", "description": "/" }
+            ]},
+            { "id": "kt16", "name": "16 FO", "capacity": 16, "fibersTotal": 16, "fibersPerTube": 4, "tubeColors": [
+              { "name": "Blanco", "hex": "#FFFFFF", "textColor": "black" }, { "name": "Rojo", "hex": "#FF0000", "textColor": "white" }, { "name": "Azul", "hex": "#0000FF", "textColor": "white" }, { "name": "Verde", "hex": "#008000", "textColor": "white" }
+            ], "fiberColors": [
+              { "name": "Verde", "hex": "#008000", "textColor": "white" }, { "name": "Rojo", "hex": "#FF0000", "textColor": "white" }, { "name": "Azul", "hex": "#0000FF", "textColor": "white" }, { "name": "Amarillo", "hex": "#FFFF00", "textColor": "black" },
+              { "name": "Gris", "hex": "#808080", "textColor": "white" }, { "name": "Violeta", "hex": "#EE82EE", "textColor": "black" }, { "name": "Marrón", "hex": "#8B4513", "textColor": "white" }, { "name": "Naranja", "hex": "#FF8C00", "textColor": "black" },
+              { "name": "Blanco", "hex": "#FFFFFF", "textColor": "black" }, { "name": "Negro", "hex": "#000000", "textColor": "white" }, { "name": "Rosa", "hex": "#FFC0CB", "textColor": "black" }, { "name": "Cyan", "hex": "#00FFFF", "textColor": "black" },
+              { "name": "Blanco /", "hex": "#FFFFFF", "textColor": "black", "description": "/" }, { "name": "Amarillo /", "hex": "#FFFF00", "textColor": "black", "description": "/" }, { "name": "Naranja /", "hex": "#FF8C00", "textColor": "black", "description": "/" }, { "name": "Rosa /", "hex": "#FFC0CB", "textColor": "black", "description": "/" }
+            ]}
+          ]
+        }
+      ]
+    }
+  ]
+}
